@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>AVATAR – Jelszó visszaállítása</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #050505;
+      color: #f5f2ec;
+      font-family: Arial, Helvetica, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 440px;
+    }
+
+    .logo {
+      color: #c6a66a;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 8px;
+      margin-bottom: 65px;
+    }
+
+    .overline {
+      color: #c6a66a;
+      text-align: center;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 4px;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      margin: 0;
+      text-align: center;
+      font-size: 36px;
+      line-height: 1.1;
+      margin-bottom: 16px;
+    }
+
+    .subtitle {
+      color: #89857e;
+      font-size: 14px;
+      line-height: 22px;
+      text-align: center;
+      margin-bottom: 38px;
+    }
+
+    .status {
+      background: #101010;
+      border: 1px solid #292929;
+      border-radius: 20px;
+      padding: 18px;
+      color: #89857e;
+      font-size: 13px;
+      line-height: 20px;
+      text-align: center;
+      margin-bottom: 26px;
+    }
+
+    .status.success {
+      border-color: #435037;
+      color: #a4b78f;
+      background: #10130e;
+    }
+
+    .status.error {
+      border-color: #5a2d2d;
+      color: #d68e8e;
+      background: #160c0c;
+    }
+
+    label {
+      display: block;
+      color: #706c66;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      margin: 0 0 9px 4px;
+    }
+
+    input {
+      width: 100%;
+      height: 58px;
+      border: 1px solid #292929;
+      border-radius: 22px;
+      background: #101010;
+      color: #f5f2ec;
+      padding: 0 18px;
+      font-size: 15px;
+      outline: none;
+      margin-bottom: 20px;
+    }
+
+    input:focus {
+      border-color: #7b633d;
+    }
+
+    button {
+      width: 100%;
+      border: 0;
+      border-radius: 24px;
+      padding: 18px;
+      background: #c6a66a;
+      color: #080808;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      cursor: pointer;
+      margin-top: 6px;
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: default;
+    }
+
+    .footer {
+      color: #403d39;
+      text-align: center;
+      font-size: 9px;
+      letter-spacing: 3px;
+      margin-top: 45px;
+    }
+
+    #form {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="container">
+    <div class="logo">AVATAR</div>
+
+    <div class="overline">
+      FIÓK HELYREÁLLÍTÁSA
+    </div>
+
+    <h1>Új jelszó</h1>
+
+    <p class="subtitle">
+      Adj meg egy új jelszót az AVATAR fiókodhoz.
+    </p>
+
+    <div
+      id="status"
+      class="status"
+    >
+      A helyreállítási link ellenőrzése...
+    </div>
+
+    <div id="form">
+      <label for="password">
+        ÚJ JELSZÓ
+      </label>
+
+      <input
+        id="password"
+        type="password"
+        placeholder="••••••••"
+        autocomplete="new-password"
+      />
+
+      <label for="confirmPassword">
+        JELSZÓ ÚJRA
+      </label>
+
+      <input
+        id="confirmPassword"
+        type="password"
+        placeholder="••••••••"
+        autocomplete="new-password"
+      />
+
+      <button id="saveButton">
+        ÚJ JELSZÓ MENTÉSE
+      </button>
+    </div>
+
+    <div class="footer">
+      PRIVATE MEMBERSHIP
+    </div>
+  </main>
+
+  <script type="module">
+    import {
+      createClient
+    } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+    const SUPABASE_URL =
+      'https://tfgdzgsisrshrufitqke.supabase.co';
+
+    /*
+      IDE CSAK a .env.local fájlban lévő
+      EXPO_PUBLIC_SUPABASE_KEY értékét másold.
+
+      SERVICE_ROLE KULCSOT SOHA!
+    */
+    const SUPABASE_KEY =
+      'sb_publishable_Xay_R2SAlU3qiZfAREA8-w_KNU_xBaY';
+
+    const supabase = createClient(
+      SUPABASE_URL,
+      SUPABASE_KEY,
+      {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+          detectSessionInUrl: false
+        }
+      }
+    );
+
+    const statusElement =
+      document.getElementById('status');
+
+    const formElement =
+      document.getElementById('form');
+
+    const passwordInput =
+      document.getElementById('password');
+
+    const confirmPasswordInput =
+      document.getElementById(
+        'confirmPassword'
+      );
+
+    const saveButton =
+      document.getElementById(
+        'saveButton'
+      );
+
+    function showError(message) {
+      statusElement.className =
+        'status error';
+
+      statusElement.textContent =
+        message;
+
+      formElement.style.display =
+        'none';
+    }
+
+    function showReady() {
+      statusElement.className =
+        'status success';
+
+      statusElement.textContent =
+        '✓ A helyreállítási link érvényes.';
+
+      formElement.style.display =
+        'block';
+    }
+
+    function getUrlParameters() {
+      const result = {};
+
+      const hash =
+        window.location.hash
+          .replace(/^#/, '');
+
+      const search =
+        window.location.search
+          .replace(/^\?/, '');
+
+      const hashParams =
+        new URLSearchParams(hash);
+
+      const searchParams =
+        new URLSearchParams(search);
+
+      for (
+        const [key, value]
+        of searchParams.entries()
+      ) {
+        result[key] = value;
+      }
+
+      for (
+        const [key, value]
+        of hashParams.entries()
+      ) {
+        result[key] = value;
+      }
+
+      return result;
+    }
+
+    async function initialiseRecovery() {
+      try {
+        if (
+          SUPABASE_KEY.includes(
+            'IDE_MASOLD'
+          )
+        ) {
+          showError(
+            'A Supabase public kulcs még nincs beállítva az index.html fájlban.'
+          );
+
+          return;
+        }
+
+        const params =
+          getUrlParameters();
+
+        if (
+          params.error ||
+          params.error_description
+        ) {
+          showError(
+            decodeURIComponent(
+              params.error_description ||
+              'A helyreállítási link hibás vagy lejárt.'
+            )
+          );
+
+          return;
+        }
+
+        const accessToken =
+          params.access_token;
+
+        const refreshToken =
+          params.refresh_token;
+
+        if (
+          !accessToken ||
+          !refreshToken
+        ) {
+          showError(
+            'A helyreállítási link hibás vagy lejárt. Kérj új jelszó-visszaállító e-mailt az alkalmazásban.'
+          );
+
+          return;
+        }
+
+        const {
+          data,
+          error
+        } =
+          await supabase.auth.setSession({
+            access_token:
+              accessToken,
+
+            refresh_token:
+              refreshToken
+          });
+
+        if (
+          error ||
+          !data.session
+        ) {
+          console.error(
+            'Recovery session error:',
+            error
+          );
+
+          showError(
+            'A helyreállítási link már lejárt vagy felhasználódott. Kérj új e-mailt.'
+          );
+
+          return;
+        }
+
+        /*
+          Eltüntetjük a tokeneket a
+          böngésző címsorából.
+        */
+        window.history.replaceState(
+          {},
+          document.title,
+          window.location.pathname
+        );
+
+        showReady();
+      } catch (error) {
+        console.error(error);
+
+        showError(
+          'Nem sikerült ellenőrizni a helyreállítási linket.'
+        );
+      }
+    }
+
+    async function savePassword() {
+      const password =
+        passwordInput.value;
+
+      const confirmPassword =
+        confirmPasswordInput.value;
+
+      if (password.length < 6) {
+        statusElement.className =
+          'status error';
+
+        statusElement.textContent =
+          'A jelszónak legalább 6 karakterből kell állnia.';
+
+        return;
+      }
+
+      if (
+        password !==
+        confirmPassword
+      ) {
+        statusElement.className =
+          'status error';
+
+        statusElement.textContent =
+          'A két jelszó nem egyezik.';
+
+        return;
+      }
+
+      try {
+        saveButton.disabled = true;
+
+        saveButton.textContent =
+          'MENTÉS...';
+
+        const {
+          error
+        } =
+          await supabase.auth
+            .updateUser({
+              password
+            });
+
+        if (error) {
+          console.error(
+            'Password update error:',
+            error
+          );
+
+          statusElement.className =
+            'status error';
+
+          statusElement.textContent =
+            error.message ||
+            'Nem sikerült megváltoztatni a jelszót.';
+
+          return;
+        }
+
+        formElement.style.display =
+          'none';
+
+        statusElement.className =
+          'status success';
+
+        statusElement.innerHTML =
+          '✓ A jelszavad sikeresen megváltozott.<br><br>Most már visszatérhetsz az AVATAR alkalmazásba, és bejelentkezhetsz az új jelszóval.';
+
+        await supabase.auth.signOut({
+          scope: 'local'
+        });
+      } catch (error) {
+        console.error(error);
+
+        statusElement.className =
+          'status error';
+
+        statusElement.textContent =
+          'Nem sikerült megváltoztatni a jelszót.';
+      } finally {
+        saveButton.disabled = false;
+
+        saveButton.textContent =
+          'ÚJ JELSZÓ MENTÉSE';
+      }
+    }
+
+    saveButton.addEventListener(
+      'click',
+      savePassword
+    );
+
+    initialiseRecovery();
+  </script>
+</body>
+</html>
